@@ -66,6 +66,9 @@ rusty_fork_test! {
         // directories next to the Rust test executable, and there is no Python stdlib
         // there.
         config.set_missing_path_configuration = false;
+        if let Ok(home) = std::env::var("PYTHONHOME") {
+            config.interpreter_config.home = Some(PathBuf::from(home));
+        }
 
         let mut interp = MainPythonInterpreter::new(config).unwrap();
 
@@ -264,6 +267,10 @@ rusty_fork_test! {
         config.interpreter_config.profile = PythonInterpreterProfile::Isolated;
         // Otherwise the Rust arguments are interpreted as Python arguments.
         config.interpreter_config.parse_argv = Some(false);
+        if let Ok(home) = std::env::var("PYTHONHOME") {
+            config.interpreter_config.home = Some(PathBuf::from(home));
+        }
+        config.interpreter_config.use_environment = Some(true);
         config.set_missing_path_configuration = false;
         config.set_missing_path_configuration = false;
         config.argv = Some(vec![get_unicode_argument()]);
@@ -328,6 +335,9 @@ rusty_fork_test! {
         config.interpreter_config.configure_locale = Some(true);
         // Otherwise the Rust arguments are interpreted as Python arguments.
         config.interpreter_config.parse_argv = Some(false);
+        if let Ok(home) = std::env::var("PYTHONHOME") {
+            config.interpreter_config.home = Some(PathBuf::from(home));
+        }
         config.set_missing_path_configuration = false;
         config.argv = Some(vec![get_unicode_argument()]);
 

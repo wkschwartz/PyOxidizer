@@ -34,7 +34,6 @@ jobs:
     - script: |
         curl -sSf -o rustup-init.exe https://win.rustup.rs
         rustup-init.exe -y --default-toolchain %RUSTUP_TOOLCHAIN%
-        set PATH=%PATH%;%USERPROFILE%\.cargo\bin
         echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
       displayName: Install Rust (Windows)
 
@@ -47,12 +46,26 @@ jobs:
         cargo -V
     displayName: Query rust and cargo versions
 
-  - script: cargo build --workspace --exclude oxidized-importer
+  - script: |
+      cargo build --workspace --exclude oxidized-importer
+      cargo test --no-run --workspace --exclude oxidized-importer
     displayName: Build
 
-  # TODO get pyembed working on Linux and macOS. It is complaining about a missing dynamic
-  # libpython.
-  - script: cargo test --workspace --exclude pyembed --exclude oxidized-importer
+  - ${{ if ne(parameters.name, 'Windows') }}:
+    - script: |
+        cargo run --bin pyoxidizer -- python-distribution-extract --download-default $HOME/pythons
+        echo "##vso[task.setvariable variable=PATH;]$HOME/pythons/python/install/bin:$PATH"
+        echo "##vso[task.setvariable variable=LD_LIBRARY_PATH;]$HOME/pythons/python/install/lib:$LD_LIBRARY_PATH"
+        echo "##vso[task.setvariable variable=PYTHONHOME;]$HOME/pythons/python/install"
+      displayName: Download and extract default Python distribution
+
+  - ${{ if eq(parameters.name, 'Windows') }}:
+    - script: |
+        cargo run --bin pyoxidizer -- python-distribution-extract --download-default %USERPROFILE%\pythons
+        echo "##vso[task.setvariable variable=PATH;]%USERPROFILE%\pythons\python\install;%PATH%"
+      displayName: Download and extract default Python distribution
+
+  - script: cargo test --workspace --exclude oxidized-importer
     displayName: Test
     env:
       IN_CI: '1'
